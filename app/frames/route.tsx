@@ -39,11 +39,12 @@ const returnTrendingTokens = async () => {
 
 const frameHandler = frames(
   async (ctx) => {
-    let signTx: undefined | string = undefined;
     init(process.env.NEXT_PUBLIC_AIRSTACK_API_KEY as string);
+
     console.log("ctx", ctx.message);
     console.log("ctx.FID", ctx.message?.requesterFid);
     let autoAction = false;
+    let signTxn = undefined;
     let emberResponse = "No response from Ember";
 
     const tokenResponse: any = await returnTrendingTokens();
@@ -53,7 +54,7 @@ const frameHandler = frames(
     if (ctx.searchParams.op === "SEND") {
       autoAction = true;
       const response: any = await fetchEmberResponse("send token");
-      response.sign_tx_url && (signTx = response.sign_tx_url);
+      response.sign_tx_url && (signTxn = response.sign_tx_url);
       emberResponse = response.inputText as string;
       console.log(emberResponse);
     }
@@ -61,7 +62,7 @@ const frameHandler = frames(
     if (ctx.searchParams.op === "SWAP") {
       autoAction = true;
       const response: any = await fetchEmberResponse("swap token on Base");
-      response.sign_tx_url && (signTx = response.sign_tx_url);
+      response.sign_tx_url && (signTxn = response.sign_tx_url);
       emberResponse = response.inputText as string;
       console.log(emberResponse);
     }
@@ -71,7 +72,7 @@ const frameHandler = frames(
       const response: any = await fetchEmberResponse(
         `buy ${tokenResponse[0]?.symbol} with address ${tokenResponse[0]?.address} on Base`
       );
-      response.sign_tx_url && (signTx = response.sign_tx_url);
+      response.sign_tx_url && (signTxn = response.sign_tx_url);
       emberResponse = response.inputText as string;
       console.log(emberResponse);
     }
@@ -79,7 +80,7 @@ const frameHandler = frames(
     if (ctx.searchParams.op === "MSG") {
       autoAction = true;
       const response: any = await fetchEmberResponse(ctx.message?.inputText);
-      response.sign_tx_url && (signTx = response.sign_tx_url);
+      response.sign_tx_url && (signTxn = response.sign_tx_url);
       emberResponse = response.inputText as string;
       console.log(emberResponse);
     }
@@ -87,28 +88,28 @@ const frameHandler = frames(
     const stringLabel = "Buy $" + tokenResponse[0]?.symbol;
 
     const ButtonsArray = [
-      !ctx.message?.inputText && !autoAction && !signTx && (
+      !ctx.message?.inputText && !autoAction && !signTxn && (
         <Button action="post" target={{ pathname: "/", query: { op: "SWAP" } }}>
           Swap Token
         </Button>
       ),
-      !ctx.message?.inputText && !autoAction && !signTx && (
+      !ctx.message?.inputText && !autoAction && !signTxn && (
         <Button action="post" target={{ pathname: "/", query: { op: "SEND" } }}>
           Send Token
         </Button>
       ),
-      !ctx.message?.inputText && !autoAction && !signTx && (
+      !ctx.message?.inputText && !autoAction && !signTxn && (
         <Button action="post" target={{ pathname: "/", query: { op: "BUY" } }}>
           {stringLabel}
         </Button>
       ),
-      !signTx && (
+      !signTxn && (
         <Button action="post" target={{ pathname: "/", query: { op: "MSG" } }}>
           Message
         </Button>
       ),
-      signTx && (
-        <Button action="link" target={signTx as string}>
+      signTxn && (
+        <Button action="link" target={signTxn as string}>
           Sign Transaction
         </Button>
       ),
