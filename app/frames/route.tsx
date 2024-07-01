@@ -119,12 +119,13 @@ const frameHandler = frames(
       image: (
         <div tw="flex flex-col bg-orange-100 w-full h-full justify-between items-center">
           <div tw="font-black bg-white w-full p-4 text-center flex justify-center border-b-4 border-orange-500 drop-shadow-sm">
-            Ember{" "}
+            Ember{" <> "}
             {(!ctx.message?.inputText &&
               ctx.userDetails?.profileName &&
               ctx.userDetails?.profileName) ||
               (ctx.userDetails?.fnames.length > 0 &&
-                "<" + ctx.userDetails?.fnames[0] + ">")}
+                +ctx.userDetails?.fnames[0])}{" "}
+            Chat
           </div>
           <div tw="flex w-full grow py-8">
             <img
