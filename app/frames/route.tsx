@@ -201,7 +201,7 @@ const frameHandler = frames(
     ];
     return {
       image: (
-        <div tw="flex flex-col bg-orange-100 w-full h-full justify-between items-center">
+        <div tw="flex flex-col bg-orange-100 w-full h-full justify-between items-center ">
           <div tw="font-black bg-white w-full p-4 text-center flex justify-center border-b-4 border-orange-500 drop-shadow-sm">
             Ember{" <> "}
             {(!ctx.message?.inputText &&
@@ -221,19 +221,19 @@ const frameHandler = frames(
             />
             <div tw="flex flex-col">
               {showHello && (
-                <div tw="bg-yellow-50  grow ml-8 mr-12 p-8 my-4 rounded-2xl rounded-bl-none border-2 border-orange-500 drop-shadow-sm w-10/12 ">
+                <div tw="bg-yellow-50  grow ml-8 mr-12 p-8 my-4 rounded-2xl rounded-bl-none border-2 border-orange-500 drop-shadow-sm w-10/12 text-2xl">
                   Hi, I am Ember. I can help you with your crypto transactions.
                   Click on the buttons below to perform an action or type a
                   message in the text box below
                 </div>
               )}
               {tokenResponse?.length > 0 && !signTxn && (
-                <div tw="bg-yellow-50  grow ml-8 mr-12 p-8 my-4 rounded-2xl rounded-bl-none border-2 border-orange-500 drop-shadow-lg w-10/12 ">
+                <div tw="bg-yellow-50  grow ml-8 mr-12 p-8 my-4 rounded-2xl rounded-bl-none border-2 border-orange-500 drop-shadow-lg w-10/12 text-2xl">
                   {"$" + tokenResponse[0]?.symbol + " is trending on Base 📈."}
                 </div>
               )}
               {(ctx.message?.inputText || autoAction) && (
-                <div tw="bg-yellow-50 grow ml-8 mr-12 p-8 my-4 rounded-2xl rounded-bl-none border-2 border-orange-500 drop-shadow-lg w-10/12 ">
+                <div tw="bg-yellow-50 grow ml-8 mr-12 p-8 my-4 rounded-2xl rounded-bl-none border-2 border-orange-500 drop-shadow-lg w-10/12 text-2xl">
                   {emberResponse}
                 </div>
               )}
