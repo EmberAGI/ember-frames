@@ -86,6 +86,7 @@ const frameHandler = frames(
     }
 
     const stringLabel = "Buy $" + tokenResponse[0]?.symbol;
+    const showHello = !ctx.message?.inputText && !autoAction && !signTxn;
 
     const ButtonsArray = [
       !ctx.message?.inputText && !autoAction && !signTxn && (
@@ -116,21 +117,42 @@ const frameHandler = frames(
     ];
     return {
       image: (
-        <div tw="flex flex-col bg-orange-300 w-full h-full justify-center items-center">
-          {tokenResponse?.length > 0 && (
-            <div tw="flex"> Trending Token: {tokenResponse[0]?.symbol}</div>
-          )}
-          {!ctx.message?.inputText && (
+        <div tw="flex flex-col bg-orange-100 w-full h-full justify-between items-center">
+          <div tw="font-black bg-white w-full p-4 text-center flex justify-center border-b-4 border-orange-500 drop-shadow-sm">
+            Ember{" "}
+            {(!ctx.message?.inputText &&
+              ctx.userDetails?.profileName &&
+              ctx.userDetails?.profileName) ||
+              (ctx.userDetails?.fnames.length > 0 &&
+                "<" + ctx.userDetails?.fnames[0] + ">")}
+          </div>
+          <div tw="flex w-full grow py-8">
+            <img
+              tw="ml-12 self-end rounded-full"
+              src="https://cdn.prod.website-files.com/665df398da20e7e4232eeb7f/6660879eae654b12732ad593_favicon.png"
+              width={100}
+              height={100}
+            />
             <div tw="flex flex-col">
-              {(ctx.userDetails?.profileName && ctx.userDetails?.profileName) ||
-                (ctx.userDetails?.fnames.length > 0 &&
-                  ctx.userDetails?.fnames[0])}{" "}
-              Chat to Ember!!{" "}
+              {showHello && (
+                <div tw="bg-yellow-50  grow ml-8 mr-12 p-8 my-4 rounded-2xl rounded-bl-none border-2 border-orange-500 drop-shadow-sm w-10/12 ">
+                  "Hi, I am Ember. I can help you with your crypto transactions.
+                  Click on the buttons below to perform an action or type a
+                  message in the text box below"
+                </div>
+              )}
+              {tokenResponse?.length > 0 && !signTxn && (
+                <div tw="bg-yellow-50  grow ml-8 mr-12 p-8 my-4 rounded-2xl rounded-bl-none border-2 border-orange-500 drop-shadow-lg w-10/12 ">
+                  {"$" + tokenResponse[0]?.symbol + " is trending on Base 📈."}
+                </div>
+              )}
+              {(ctx.message?.inputText || autoAction) && (
+                <div tw="bg-yellow-50  grow ml-8 mr-12 p-8 my-4 rounded-2xl rounded-bl-none border-2 border-orange-500 drop-shadow-lg w-10/12 ">
+                  {emberResponse}
+                </div>
+              )}
             </div>
-          )}
-          {(ctx.message?.inputText || autoAction) && (
-            <div tw="flex">{emberResponse}</div>
-          )}
+          </div>
         </div>
       ),
       textInput: "Say something",
