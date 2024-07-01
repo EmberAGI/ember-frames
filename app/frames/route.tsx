@@ -24,12 +24,16 @@ const ChatEmberRespons = z.object({
   sign_tx_url: z.string().nullable(),
 });
 
-const fetchEmberResponse = async (inputText: string | undefined, fid: string | undefined, username?: string) => {
+const fetchEmberResponse = async (
+  inputText: string | undefined,
+  fid: string | undefined,
+  username?: string
+) => {
   const response = await fetch(`https://devapi.emberai.xyz/v1/chat`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "authorization": `Bearer ${process.env.EMBER_API_KEY as string}`
+      authorization: `Bearer ${process.env.EMBER_API_KEY as string}`,
     },
     body: JSON.stringify({
       user_id: fid,
@@ -78,15 +82,15 @@ const fetchEmberResponse = async (inputText: string | undefined, fid: string | u
     }
   }
 
-    //mocking the async response using Timeout
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          inputText: "ANSWER:" + inputText,
-        });
-      }, 1000);
-    });
-}
+  //mocking the async response using Timeout
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        inputText: "ANSWER:" + inputText,
+      });
+    }, 1000);
+  });
+};
 
 function parseSseResponse(value: string) {
   const lines = value.split("\n");
@@ -102,7 +106,7 @@ function parseSseResponse(value: string) {
   }
 
   return { event, rawData };
-};
+}
 
 const returnTrendingTokens = async () => {
   const { data, error }: { data: any; error?: any } = await getTrendingTokens({
@@ -135,7 +139,11 @@ const frameHandler = frames(
 
     if (ctx.searchParams.op === "SEND") {
       autoAction = true;
-      const response: any = await fetchEmberResponse("send token", fid_string, ctx.userDetails?.profileName);
+      const response: any = await fetchEmberResponse(
+        "send token",
+        fid_string,
+        ctx.userDetails?.profileName
+      );
       response.sign_tx_url && (signTxn = response.sign_tx_url);
       emberResponse = response.message as string;
       console.log(emberResponse);
@@ -143,7 +151,11 @@ const frameHandler = frames(
 
     if (ctx.searchParams.op === "SWAP") {
       autoAction = true;
-      const response: any = await fetchEmberResponse("swap token on Base", fid_string, ctx.userDetails?.profileName);
+      const response: any = await fetchEmberResponse(
+        "swap token on Base",
+        fid_string,
+        ctx.userDetails?.profileName
+      );
       response.sign_tx_url && (signTxn = response.sign_tx_url);
       emberResponse = response.message as string;
       console.log(emberResponse);
@@ -163,7 +175,11 @@ const frameHandler = frames(
 
     if (ctx.searchParams.op === "MSG") {
       autoAction = true;
-      const response: any = await fetchEmberResponse(ctx.message?.inputText, fid_string, ctx.userDetails?.profileName);
+      const response: any = await fetchEmberResponse(
+        ctx.message?.inputText,
+        fid_string,
+        ctx.userDetails?.profileName
+      );
       response.sign_tx_url && (signTxn = response.sign_tx_url);
       emberResponse = response.message as string;
       console.log(emberResponse);
@@ -227,7 +243,7 @@ const frameHandler = frames(
                   message in the text box below
                 </div>
               )}
-              {tokenResponse?.length > 0 && !signTxn && (
+              {showHello && tokenResponse?.length > 0 && !signTxn && (
                 <div tw="bg-yellow-50  grow ml-8 mr-12 p-8 my-4 rounded-2xl rounded-bl-none border-2 border-orange-500 drop-shadow-lg w-10/12 text-2xl">
                   {"$" + tokenResponse[0]?.symbol + " is trending on Base 📈."}
                 </div>
