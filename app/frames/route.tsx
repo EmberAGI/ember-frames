@@ -132,13 +132,14 @@ const frameHandler = frames(
               src="https://cdn.prod.website-files.com/665df398da20e7e4232eeb7f/6660879eae654b12732ad593_favicon.png"
               width={100}
               height={100}
+              alt="Ember Logo"
             />
             <div tw="flex flex-col">
               {showHello && (
                 <div tw="bg-yellow-50  grow ml-8 mr-12 p-8 my-4 rounded-2xl rounded-bl-none border-2 border-orange-500 drop-shadow-sm w-10/12 ">
-                  "Hi, I am Ember. I can help you with your crypto transactions.
+                  Hi, I am Ember. I can help you with your crypto transactions.
                   Click on the buttons below to perform an action or type a
-                  message in the text box below"
+                  message in the text box below
                 </div>
               )}
               {tokenResponse?.length > 0 && !signTxn && (
@@ -147,7 +148,7 @@ const frameHandler = frames(
                 </div>
               )}
               {(ctx.message?.inputText || autoAction) && (
-                <div tw="bg-yellow-50  grow ml-8 mr-12 p-8 my-4 rounded-2xl rounded-bl-none border-2 border-orange-500 drop-shadow-lg w-10/12 ">
+                <div tw="bg-yellow-50 grow ml-8 mr-12 p-8 my-4 rounded-2xl rounded-bl-none border-2 border-orange-500 drop-shadow-lg w-10/12 ">
                   {emberResponse}
                 </div>
               )}
