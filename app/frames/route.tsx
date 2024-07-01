@@ -157,6 +157,7 @@ const frameHandler = frames(
           </div>
         </div>
       ),
+      imageOptions: { headers: { "Cache-Control": "public, max-age=0" } },
       textInput: "Say something",
       buttons: ButtonsArray,
     };
