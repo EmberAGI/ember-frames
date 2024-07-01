@@ -93,11 +93,9 @@ const frameHandler = frames(
         </Button>
       ),
       !ctx.message?.inputText && !autoAction && (
-        <Button
-          action="post"
-          target={{ pathname: "/", query: { op: "BUY" } }}
-          children={stringLabel}
-        />
+        <Button action="post" target={{ pathname: "/", query: { op: "BUY" } }}>
+          {stringLabel}
+        </Button>
       ),
       <Button action="post" target={{ pathname: "/", query: { op: "MSG" } }}>
         Message
