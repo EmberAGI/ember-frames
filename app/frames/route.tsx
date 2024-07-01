@@ -112,7 +112,7 @@ const frameHandler = frames(
               {(ctx.userDetails?.profileName && ctx.userDetails?.profileName) ||
                 (ctx.userDetails?.fnames.length > 0 &&
                   ctx.userDetails?.fnames[0])}{" "}
-              Chat to Ember!{" "}
+              Chat to Ember!!{" "}
             </div>
           )}
           {(ctx.message?.inputText || autoAction) && (
