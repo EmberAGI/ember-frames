@@ -21,7 +21,7 @@ const ChatEmberRespons = z.object({
     z.literal("error"),
   ]),
   message: z.string(),
-  sign_tx_url: z.string().optional(),
+  sign_tx_url: z.string().nullable(),
 });
 
 const fetchEmberResponse = async (inputText: string | undefined, fid: string | undefined, username?: string) => {
@@ -37,6 +37,11 @@ const fetchEmberResponse = async (inputText: string | undefined, fid: string | u
       username,
     }),
   });
+
+  console.log(`\n\n---\n\nresponse:`);
+  console.log(response);
+  console.log("response.body");
+  console.log(response.body);
 
   if (!response.ok || response.body == null) {
     throw new Error("Failed to connect to Ember server");
@@ -72,6 +77,15 @@ const fetchEmberResponse = async (inputText: string | undefined, fid: string | u
         throw new Error("Invalid response");
     }
   }
+
+    //mocking the async response using Timeout
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          inputText: "ANSWER:" + inputText,
+        });
+      }, 1000);
+    });
 }
 
 function parseSseResponse(value: string) {
@@ -88,15 +102,6 @@ function parseSseResponse(value: string) {
   }
 
   return { event, rawData };
-
-  //mocking the async response using Timeout
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        inputText: "ANSWER:" + inputText,
-      });
-    }, 1000);
-  });
 };
 
 const returnTrendingTokens = async () => {
