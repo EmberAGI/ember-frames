@@ -13,7 +13,7 @@ import {
 } from "@airstack/frames";
 import { init } from "@airstack/frames";
 
-const fetchEmberResponse = async (inputText: string) => {
+const fetchEmberResponse = async (inputText: string | undefined) => {
   //mocking the async response using Timeout
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -131,7 +131,7 @@ const frameHandler = frames(
         apiKey: process.env.NEXT_PUBLIC_AIRSTACK_API_KEY as string,
         // Add `USER_DETAILS` to the `features` array
         features: [Features.USER_DETAILS],
-      }),
+      }) as any,
     ],
   }
 );
