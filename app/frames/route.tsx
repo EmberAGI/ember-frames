@@ -127,11 +127,13 @@ const frameHandler = frames(
 
     console.log("ctx", ctx.message);
     console.log("ctx.FID", ctx.message?.requesterFid);
+    console.log("ctx.userDetails", ctx.userDetails);
     let autoAction = false;
     let signTxn = undefined;
+    let showBuy = false;
     let emberResponse = "No response from Ember";
 
-    const tokenResponse: any = await returnTrendingTokens();
+    let tokenResponse: any = [];
 
     console.log(tokenResponse);
 
@@ -139,11 +141,21 @@ const frameHandler = frames(
 
     if (ctx.searchParams.op === "SEND") {
       autoAction = true;
-      const response: any = await fetchEmberResponse(
-        "send token",
+      let response: any;
+      const resetAndRespond: any = await fetchEmberResponse(
+        "terminate",
         fid_string,
         ctx.userDetails?.profileName
-      );
+      ).then(async (r) => {
+        console.log("Reset Response", r);
+        response = await fetchEmberResponse(
+          "send token",
+          fid_string,
+          ctx.userDetails?.profileName
+        );
+      });
+      console.log(resetAndRespond);
+
       response.sign_tx_url && (signTxn = response.sign_tx_url);
       emberResponse = response.message as string;
       console.log(emberResponse);
@@ -151,35 +163,83 @@ const frameHandler = frames(
 
     if (ctx.searchParams.op === "SWAP") {
       autoAction = true;
-      const response: any = await fetchEmberResponse(
-        "swap token on Base",
+
+      let response: any;
+      const resetAndRespond: any = await fetchEmberResponse(
+        "terminate",
         fid_string,
         ctx.userDetails?.profileName
-      );
+      ).then(async (r) => {
+        console.log("Reset Response", r);
+        response = await fetchEmberResponse(
+          "swap token on Base",
+          fid_string,
+          ctx.userDetails?.profileName
+        );
+      });
+      console.log(resetAndRespond);
+
       response.sign_tx_url && (signTxn = response.sign_tx_url);
       emberResponse = response.message as string;
       console.log(emberResponse);
     }
 
+    if (ctx.searchParams.op === "TKN") {
+      autoAction = true;
+      showBuy = true;
+      tokenResponse = await returnTrendingTokens();
+      emberResponse = `${tokenResponse[0]?.symbol} is trending on Base. 📈 Would you like to buy it?`;
+      console.log(emberResponse);
+    }
+
     if (ctx.searchParams.op === "BUY") {
       autoAction = true;
-      const response: any = await fetchEmberResponse(
-        `buy ${tokenResponse[0]?.symbol} with address ${tokenResponse[0]?.address} on Base`,
+      tokenResponse = await returnTrendingTokens();
+
+      let response: any;
+      const resetAndRespond: any = await fetchEmberResponse(
+        "terminate",
         fid_string,
         ctx.userDetails?.profileName
-      );
+      ).then(async (r) => {
+        console.log("Reset Response", r);
+        response = await fetchEmberResponse(
+          `buy ${tokenResponse[0]?.symbol} with address ${tokenResponse[0]?.address} on Base`,
+          fid_string,
+          ctx.userDetails?.profileName
+        );
+      });
+      console.log(resetAndRespond);
+
       response.sign_tx_url && (signTxn = response.sign_tx_url);
       emberResponse = response.message as string;
       console.log(emberResponse);
     }
 
     if (ctx.searchParams.op === "MSG") {
-      autoAction = true;
-      const response: any = await fetchEmberResponse(
-        ctx.message?.inputText,
-        fid_string,
-        ctx.userDetails?.profileName
-      );
+      let response: any;
+      if (!ctx.message?.inputText && !autoAction && !signTxn) {
+        const resetAndRespond: any = await fetchEmberResponse(
+          "terminate",
+          fid_string,
+          ctx.userDetails?.profileName
+        ).then(async (r) => {
+          console.log("Reset Response", r);
+          response = await fetchEmberResponse(
+            `ctx.message?.inputText`,
+            fid_string,
+            ctx.userDetails?.profileName
+          );
+        });
+        console.log(resetAndRespond);
+      } else {
+        response = await fetchEmberResponse(
+          ctx.message?.inputText,
+          fid_string,
+          ctx.userDetails?.profileName
+        );
+      }
+
       response.sign_tx_url && (signTxn = response.sign_tx_url);
       emberResponse = response.message as string;
       console.log(emberResponse);
@@ -200,6 +260,11 @@ const frameHandler = frames(
         </Button>
       ),
       !ctx.message?.inputText && !autoAction && !signTxn && (
+        <Button action="post" target={{ pathname: "/", query: { op: "TKN" } }}>
+          Trending Token
+        </Button>
+      ),
+      !ctx.message?.inputText && !signTxn && showBuy && (
         <Button action="post" target={{ pathname: "/", query: { op: "BUY" } }}>
           {stringLabel}
         </Button>
@@ -220,11 +285,9 @@ const frameHandler = frames(
         <div tw="flex flex-col bg-orange-100 w-full h-full justify-between items-center ">
           <div tw="font-black bg-white w-full p-4 text-center flex justify-center border-b-4 border-orange-500 drop-shadow-sm">
             Ember{" <> "}
-            {(!ctx.message?.inputText &&
-              ctx.userDetails?.profileName &&
-              ctx.userDetails?.profileName) ||
+            {(ctx.userDetails?.profileName && ctx.userDetails?.profileName) ||
               (ctx.userDetails?.fnames.length > 0 &&
-                +ctx.userDetails?.fnames[0])}{" "}
+                ctx.userDetails?.fnames[0])}{" "}
             Chat
           </div>
           <div tw="flex w-full grow py-8">
@@ -243,9 +306,9 @@ const frameHandler = frames(
                   message in the text box below
                 </div>
               )}
-              {showHello && tokenResponse?.length > 0 && !signTxn && (
+              {showHello && !signTxn && (
                 <div tw="bg-yellow-50  grow ml-8 mr-12 p-8 my-4 rounded-2xl rounded-bl-none border-2 border-orange-500 drop-shadow-lg w-10/12 text-2xl">
-                  {"$" + tokenResponse[0]?.symbol + " is trending on Base 📈."}
+                  {"Also check out the top trending token on Base 📈."}
                 </div>
               )}
               {(ctx.message?.inputText || autoAction) && (
