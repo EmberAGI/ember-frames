@@ -188,7 +188,7 @@ const frameHandler = frames(
       autoAction = true;
       showBuy = true;
       tokenResponse = await returnTrendingTokens();
-      emberResponse = `${tokenResponse[0]?.symbol} is trending on Base. 📈 Would you like to buy it?`;
+      emberResponse = `$${tokenResponse[0]?.symbol} is trending on Base. 📈 Would you like to buy it?`;
       console.log(emberResponse);
     }
 
@@ -234,7 +234,10 @@ const frameHandler = frames(
         console.log(resetAndRespond);
       } else {
         response = await fetchEmberResponse(
-          ctx.message?.inputText,
+          showBuy
+            ? `assistant: ${tokenResponse[0]?.symbol} is trending on Base. 📈 Would you like to buy it?/n/nuser:` +
+                ctx.message?.inputText
+            : ctx.message?.inputText,
           fid_string,
           ctx.userDetails?.profileName
         );
