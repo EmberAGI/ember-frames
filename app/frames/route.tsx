@@ -92,6 +92,37 @@ const fetchEmberResponse = async (
   });
 };
 
+const fetchEmberLastMessage = async (
+  inputText: string | undefined,
+  fid: string | undefined,
+  username?: string
+) => {
+  const response = await fetch(`https://devapi.emberai.xyz/v1/chat/last`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      authorization: `Bearer ${process.env.EMBER_API_KEY as string}`,
+    },
+    body: JSON.stringify({
+      user_id: fid,
+      message: inputText,
+      username,
+      numberOfMessages: 1,
+    }),
+  });
+
+  console.log(`\n\n---\n\nresponse:`);
+  console.log(response);
+  console.log("response.body");
+  console.log(response.body);
+
+  if (!response.ok || response.body == null) {
+    throw new Error("Failed to connect to Ember server");
+  }
+
+  return response.json();
+};
+
 function parseSseResponse(value: string) {
   const lines = value.split("\n");
   let event = undefined;
@@ -106,6 +137,25 @@ function parseSseResponse(value: string) {
   }
 
   return { event, rawData };
+}
+
+function withTimeOut<T>(promise: Promise<T>, timeout: number) {
+  return Promise.race([
+    promise,
+    new Promise((resolve, reject) =>
+      setTimeout(
+        () =>
+          resolve({
+            message:
+              "I'm still working on your request, please click the refresh button to update your answer",
+            status: "processing",
+            sign_tx_url: "",
+            show_refresh: true,
+          }),
+        timeout
+      )
+    ),
+  ]);
 }
 
 const returnTrendingTokens = async () => {
@@ -123,6 +173,7 @@ const returnTrendingTokens = async () => {
 
 const frameHandler = frames(
   async (ctx) => {
+    const defaultTimeout = 3000;
     init(process.env.NEXT_PUBLIC_AIRSTACK_API_KEY as string);
 
     console.log("ctx", ctx.message);
@@ -131,11 +182,10 @@ const frameHandler = frames(
     let autoAction = false;
     let signTxn = undefined;
     let showBuy = false;
+    let showRefresh = false;
     let emberResponse = "No response from Ember";
 
     let tokenResponse: any = [];
-
-    console.log(tokenResponse);
 
     const fid_string = String(ctx.message?.requesterFid);
 
@@ -148,16 +198,20 @@ const frameHandler = frames(
         ctx.userDetails?.profileName
       ).then(async (r) => {
         console.log("Reset Response", r);
-        response = await fetchEmberResponse(
-          "send token",
-          fid_string,
-          ctx.userDetails?.profileName
+        response = await withTimeOut(
+          fetchEmberResponse(
+            "send token",
+            fid_string,
+            ctx.userDetails?.profileName
+          ),
+          defaultTimeout
         );
       });
       console.log(resetAndRespond);
 
       response.sign_tx_url && (signTxn = response.sign_tx_url);
       emberResponse = response.message as string;
+      showRefresh = response.show_refresh;
       console.log(emberResponse);
     }
 
@@ -171,16 +225,20 @@ const frameHandler = frames(
         ctx.userDetails?.profileName
       ).then(async (r) => {
         console.log("Reset Response", r);
-        response = await fetchEmberResponse(
-          "swap token on Base",
-          fid_string,
-          ctx.userDetails?.profileName
+        response = await withTimeOut(
+          fetchEmberResponse(
+            "swap token on Base",
+            fid_string,
+            ctx.userDetails?.profileName
+          ),
+          defaultTimeout
         );
       });
       console.log(resetAndRespond);
 
       response.sign_tx_url && (signTxn = response.sign_tx_url);
       emberResponse = response.message as string;
+      showRefresh = response.show_refresh;
       console.log(emberResponse);
     }
 
@@ -203,16 +261,20 @@ const frameHandler = frames(
         ctx.userDetails?.profileName
       ).then(async (r) => {
         console.log("Reset Response", r);
-        response = await fetchEmberResponse(
-          `buy ${tokenResponse[0]?.symbol} with address ${tokenResponse[0]?.address} on Base`,
-          fid_string,
-          ctx.userDetails?.profileName
+        response = await withTimeOut(
+          fetchEmberResponse(
+            `buy ${tokenResponse[0]?.symbol} with address ${tokenResponse[0]?.address} on Base`,
+            fid_string,
+            ctx.userDetails?.profileName
+          ),
+          2500
         );
       });
       console.log(resetAndRespond);
 
       response.sign_tx_url && (signTxn = response.sign_tx_url);
       emberResponse = response.message as string;
+      showRefresh = response.show_refresh;
       console.log(emberResponse);
     }
 
@@ -225,26 +287,47 @@ const frameHandler = frames(
           ctx.userDetails?.profileName
         ).then(async (r) => {
           console.log("Reset Response", r);
-          response = await fetchEmberResponse(
-            `ctx.message?.inputText`,
-            fid_string,
-            ctx.userDetails?.profileName
+          response = await withTimeOut(
+            fetchEmberResponse(
+              `ctx.message?.inputText`,
+              fid_string,
+              ctx.userDetails?.profileName
+            ),
+            defaultTimeout
           );
         });
         console.log(resetAndRespond);
       } else {
-        response = await fetchEmberResponse(
-          showBuy
-            ? `assistant: ${tokenResponse[0]?.symbol} is trending on Base. 📈 Would you like to buy it?/n/nuser:` +
-                ctx.message?.inputText
-            : ctx.message?.inputText,
-          fid_string,
-          ctx.userDetails?.profileName
+        response = await withTimeOut(
+          fetchEmberResponse(
+            showBuy
+              ? `assistant: ${tokenResponse[0]?.symbol} is trending on Base. 📈 Would you like to buy it?/n/nuser:` +
+                  ctx.message?.inputText
+              : ctx.message?.inputText,
+            fid_string,
+            ctx.userDetails?.profileName
+          ),
+          defaultTimeout
         );
       }
 
       response.sign_tx_url && (signTxn = response.sign_tx_url);
       emberResponse = response.message as string;
+      showRefresh = response.show_refresh;
+      console.log(emberResponse);
+    }
+
+    if (ctx.searchParams.op === "RFS") {
+      let response: any;
+      autoAction = true;
+
+      response = await fetchEmberLastMessage(
+        "",
+        fid_string,
+        ctx.userDetails?.profileName
+      );
+      console.log("LAST MESSAGE RESPONSE", response);
+      emberResponse = response.lastMessages[0]?.message as string;
       console.log(emberResponse);
     }
 
@@ -252,34 +335,39 @@ const frameHandler = frames(
     const showHello = !ctx.message?.inputText && !autoAction && !signTxn;
 
     const ButtonsArray = [
-      !ctx.message?.inputText && !autoAction && !signTxn && (
+      !showRefresh && !ctx.message?.inputText && !autoAction && !signTxn && (
         <Button action="post" target={{ pathname: "/", query: { op: "SWAP" } }}>
           Swap Token
         </Button>
       ),
-      !ctx.message?.inputText && !autoAction && !signTxn && (
+      !showRefresh && !ctx.message?.inputText && !autoAction && !signTxn && (
         <Button action="post" target={{ pathname: "/", query: { op: "SEND" } }}>
           Send Token
         </Button>
       ),
-      !ctx.message?.inputText && !autoAction && !signTxn && (
+      !showRefresh && !ctx.message?.inputText && !autoAction && !signTxn && (
         <Button action="post" target={{ pathname: "/", query: { op: "TKN" } }}>
           Trending Token
         </Button>
       ),
-      !ctx.message?.inputText && !signTxn && showBuy && (
+      !showRefresh && !ctx.message?.inputText && !signTxn && showBuy && (
         <Button action="post" target={{ pathname: "/", query: { op: "BUY" } }}>
           {stringLabel}
         </Button>
       ),
-      !signTxn && (
+      !showRefresh && !signTxn && (
         <Button action="post" target={{ pathname: "/", query: { op: "MSG" } }}>
           Message
         </Button>
       ),
-      signTxn && (
+      !showRefresh && signTxn && (
         <Button action="link" target={signTxn as string}>
           Sign Transaction
+        </Button>
+      ),
+      showRefresh && (
+        <Button action="post" target={{ pathname: "/", query: { op: "RFS" } }}>
+          Refresh
         </Button>
       ),
     ];
