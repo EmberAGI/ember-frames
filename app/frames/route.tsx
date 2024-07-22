@@ -328,6 +328,8 @@ const frameHandler = frames(
       );
       console.log("LAST MESSAGE RESPONSE", response);
       emberResponse = response.lastMessages[0]?.message as string;
+      response.lastMessages[0]?.sign_tx_url &&
+        (signTxn = response.lastMessages[0]?.sign_tx_url);
       console.log(emberResponse);
     }
 
