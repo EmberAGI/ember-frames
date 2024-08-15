@@ -24,12 +24,14 @@ const ChatEmberRespons = z.object({
   sign_tx_url: z.string().nullable(),
 });
 
+const url = "https://api.emberai.xyz/v1/";
+
 const fetchEmberResponse = async (
   inputText: string | undefined,
   fid: string | undefined,
   username?: string
 ) => {
-  const response = await fetch(`https://devapi.emberai.xyz/v1/chat`, {
+  const response = await fetch(url + `chat`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -97,7 +99,7 @@ const fetchEmberLastMessage = async (
   fid: string | undefined,
   username?: string
 ) => {
-  const response = await fetch(`https://devapi.emberai.xyz/v1/chat/last`, {
+  const response = await fetch(url + `chat/last`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -158,7 +160,7 @@ function withTimeOut<T>(promise: Promise<T>, timeout: number) {
   ]);
 }
 
-const returnTrendingTokens = async () => {
+/*const returnTrendingTokens = async () => {
   const { data, error }: { data: any; error?: any } = await getTrendingTokens({
     audience: Audience.All,
     criteria: TrendingTokensCriteria.UniqueWallets,
@@ -169,11 +171,11 @@ const returnTrendingTokens = async () => {
   });
   if (error) throw new Error(error);
   return data;
-};
+};*/
 
 const frameHandler = frames(
   async (ctx) => {
-    const defaultTimeout = 3000;
+    const defaultTimeout = 4000;
     init(process.env.NEXT_PUBLIC_AIRSTACK_API_KEY as string);
 
     console.log("ctx", ctx.message);
@@ -185,7 +187,7 @@ const frameHandler = frames(
     let showRefresh = false;
     let emberResponse = "No response from Ember";
 
-    let tokenResponse: any = [];
+    //let tokenResponse: any = [];
 
     const fid_string = String(ctx.message?.requesterFid);
 
@@ -242,17 +244,17 @@ const frameHandler = frames(
       console.log(emberResponse);
     }
 
-    if (ctx.searchParams.op === "TKN") {
+    /*if (ctx.searchParams.op === "TKN") {
       autoAction = true;
       showBuy = true;
       tokenResponse = await returnTrendingTokens();
       emberResponse = `$${tokenResponse[0]?.symbol} is trending on Base. 📈 Would you like to buy it?`;
       console.log(emberResponse);
-    }
+    }*/
 
     if (ctx.searchParams.op === "BUY") {
       autoAction = true;
-      tokenResponse = await returnTrendingTokens();
+      //tokenResponse = await returnTrendingTokens();
 
       let response: any;
       const resetAndRespond: any = await fetchEmberResponse(
@@ -262,8 +264,13 @@ const frameHandler = frames(
       ).then(async (r) => {
         console.log("Reset Response", r);
         response = await withTimeOut(
-          fetchEmberResponse(
+          /*  fetchEmberResponse(
             `buy ${tokenResponse[0]?.symbol} with address ${tokenResponse[0]?.address} on Base`,
+            fid_string,
+            ctx.userDetails?.profileName
+          ), */
+          fetchEmberResponse(
+            `buy token on Base`,
             fid_string,
             ctx.userDetails?.profileName
           ),
@@ -301,7 +308,7 @@ const frameHandler = frames(
         response = await withTimeOut(
           fetchEmberResponse(
             showBuy
-              ? `assistant: ${tokenResponse[0]?.symbol} is trending on Base. 📈 Would you like to buy it?/n/nuser:` +
+              ? `assistant: token is trending on Base. 📈 Would you like to buy it?/n/nuser:` +
                   ctx.message?.inputText
               : ctx.message?.inputText,
             fid_string,
@@ -320,20 +327,25 @@ const frameHandler = frames(
     if (ctx.searchParams.op === "RFS") {
       let response: any;
       autoAction = true;
-
-      response = await fetchEmberLastMessage(
-        "",
-        fid_string,
-        ctx.userDetails?.profileName
-      );
-      console.log("LAST MESSAGE RESPONSE", response);
-      emberResponse = response.lastMessages[0]?.message as string;
-      response.lastMessages[0]?.sign_tx_url &&
-        (signTxn = response.lastMessages[0]?.sign_tx_url);
-      console.log(emberResponse);
+      // async timeout function
+      const sleep = (ms: number) =>
+        new Promise((resolve) => setTimeout(resolve, ms));
+      await sleep(4000).then(async () => {
+        console.log("REFRESHING");
+        response = await fetchEmberLastMessage(
+          "",
+          fid_string,
+          ctx.userDetails?.profileName
+        );
+        console.log("LAST MESSAGE RESPONSE", response);
+        emberResponse = response.lastMessages[0]?.content as string;
+        response.lastMessages[0]?.sign_tx_url &&
+          (signTxn = response.lastMessages[0]?.sign_tx_url);
+        console.log(emberResponse);
+      });
     }
 
-    const stringLabel = "Buy $" + tokenResponse[0]?.symbol;
+    //const stringLabel = "Buy $" + tokenResponse[0]?.symbol;
     const showHello = !ctx.message?.inputText && !autoAction && !signTxn;
 
     const ButtonsArray = [
@@ -347,16 +359,16 @@ const frameHandler = frames(
           Send Token
         </Button>
       ),
-      !showRefresh && !ctx.message?.inputText && !autoAction && !signTxn && (
+      /* !showRefresh && !ctx.message?.inputText && !autoAction && !signTxn && (
         <Button action="post" target={{ pathname: "/", query: { op: "TKN" } }}>
           Trending Token
         </Button>
-      ),
-      !showRefresh && !ctx.message?.inputText && !signTxn && showBuy && (
+      ), */
+      /*!showRefresh && !ctx.message?.inputText && !signTxn && showBuy && (
         <Button action="post" target={{ pathname: "/", query: { op: "BUY" } }}>
           {stringLabel}
         </Button>
-      ),
+      ),*/
       !showRefresh && !signTxn && (
         <Button action="post" target={{ pathname: "/", query: { op: "MSG" } }}>
           Message
@@ -399,11 +411,11 @@ const frameHandler = frames(
                   message in the text box below
                 </div>
               )}
-              {showHello && !signTxn && (
+              {/*showHello && !signTxn && (
                 <div tw="bg-yellow-50  grow ml-8 mr-12 p-8 my-4 rounded-2xl rounded-bl-none border-2 border-orange-500 drop-shadow-lg w-10/12 text-2xl">
                   {"Also check out the top trending token on Base 📈."}
                 </div>
-              )}
+              )*/}
               {(ctx.message?.inputText || autoAction) && (
                 <div tw="bg-yellow-50 grow ml-8 mr-12 p-8 my-4 rounded-2xl rounded-bl-none border-2 border-orange-500 drop-shadow-lg w-10/12 text-2xl">
                   {emberResponse}
@@ -414,7 +426,7 @@ const frameHandler = frames(
         </div>
       ),
       imageOptions: { headers: { "Cache-Control": "public, max-age=0" } },
-      textInput: "Say something",
+      textInput: !showRefresh ? "Say something" : null,
       buttons: ButtonsArray,
     };
   },

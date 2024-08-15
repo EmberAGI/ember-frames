@@ -9,7 +9,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: "frames.js starter",
     description: "This is a frames.js starter template",
     other: {
-      ...(await fetchMetadata(new URL("/frames", appURL()))),
+      ...(await fetchMetadata(new URL("/emberv1", appURL()))),
     },
   };
 }
@@ -20,10 +20,7 @@ export default async function Home() {
   return (
     <div className="p-4">
       frames.js starter kit. The Template Frame is on this page, it&apos;s in
-      the html meta tags (inspect source). <DebugLink /> or see{" "}
-      <Link href="/examples" className="underline">
-        other examples
-      </Link>
+      the html meta tags (inspect source). <DebugLink />
     </div>
   );
 }
